@@ -1,0 +1,3 @@
+[submodule "alchemy"]
+	path = alchemy
+	url = git@github.com:XiPotatonium/alchemy.git
