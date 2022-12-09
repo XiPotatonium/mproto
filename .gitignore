@@ -1,6 +1,6 @@
 /.vscode/
-# /data/
-# /records/
+/data/
+/records/
 __pycache__
 
 /demo.py

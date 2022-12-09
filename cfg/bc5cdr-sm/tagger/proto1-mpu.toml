@@ -1,0 +1,118 @@
+tag = "proto1-mpu"
+runner = "alchemy.runner.Trainer"
+plugins = [
+    { type = "alchemy.plugins.BasicSetup" },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/bc5cdr-sm/tagger/train-mpu", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
+    { type = "alchemy.plugins.TensorboardLogger" },
+    { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
+    { type = "alchemy.plugins.DisplayRunningInfo" },
+]
+
+[task]
+type = "src.task.ner.NerTask"
+
+outputpipes = [     # 只有在eval和inference的时候会调用，train的时候不会
+    { type = "src.models.tagger.ProcTaggingOutput" },
+    { type = "src.task.ner.outputpipe.WithSampleInfo" },
+    # { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds_raw.jsonl" },
+    { type = "src.task.ner.outputpipe.PruneNone" },           # PnRNet的预测中会包含None，需要去掉
+    # { type = "src.task.ner.outputpipe.PruneInvalidSpan" },
+    # { type = "src.task.ner.outputpipe.PruneOverlappingByConfidence", weight = { type_score = 1.0, start_score = 0.5, end_score = 0.5 } },
+    # { type = "src.task.ner.outputpipe.PrunePartialOverlappingByConfidence", weight = { type_score = 1.0 } },
+    # { type = "src.task.ner.outputpipe.PruneByClsScore", threshold = 0.9 },
+    # { type = "src.task.ner.outputpipe.PruneByBoundaryScore", threshold = 0.9 },
+    { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds.jsonl" },
+    { type = "alchemy.pipeline.output.Collect", varname = "preds_for_eval" },         # eval需要做一下collect因为eval需要全部一起eval
+]
+
+evalpipes = [
+    { type = "src.task.ner.evalpipe.EvalNer", varname = "preds_for_eval" },
+    { type = "src.task.ner.evalpipe.LogBest" },
+    { type = "src.task.ner.evalpipe.LogTensorboard" },
+    { type = "src.task.ner.evalpipe.SaveStepExamples", template = "src/templates/entity_examples.html", save_dir = "detail_log" },
+    { type = "src.task.ner.evalpipe.SaveModel", store_best = true, store_all = false },
+]
+
+meta = "data/datasets/bc5cdr-mpu-sm/meta.json"
+
+[task.datasets.train]
+shuffle = true
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-mpu-sm/train.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    # { type = "alchemy.pipeline.itr.Shuffle" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 16 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[task.datasets.dev]
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-mpu-sm/dev.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[task.datasets.test]
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-mpu-sm/test.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    # { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[sched]
+type = "alchemy.sched.LineWarmup"
+epochs = 10
+lr_warmup_steps = 100
+
+pipes = [
+    { type = "alchemy.pipeline.sched.EvalStepESPipeline", period = 50 },
+    # { type = "src.pipeline.LogTrainLossESPipeline", log_tensorboard = true, log_file = true },
+    # { type = "src.pipeline.LogLRESPipeline", log_tensorboard = true, log_file = false },
+]
+
+[model]
+type = "src.models.tagger.NonParamProtoTagger"
+
+plm_type = "bert"
+plm_path = "/home/wsh/trf/biobert-base-cased-v1.1"
+tokenizer_path = "/home/wsh/trf/biobert-base-cased-v1.1"
+lowercase = false
+
+dropout = 0.1
+
+use_learnable_scalar = false
+num_proto_per_type = 1
+
+[criterion]
+type = "ce"
+
+neg_ratio = 0.01
+compact_weight = 0.5
+match_type = "sinkhorn"
+
+proto_ema_momentum = 0.5
+
+[optim]
+type = "alchemy.optim.AdamW"
+lr = 1e-5
+trf_lr = 1e-5
+weight_decay = 1e-4
+max_grad_norm = 1.0
