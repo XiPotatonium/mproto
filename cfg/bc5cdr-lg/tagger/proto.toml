@@ -47,7 +47,7 @@ pipes = [
     { type = "src.task.ner.datapipe.PruneLongText" },
     { type = "src.task.ner.datapipe.Sample2Encoding" },
     { type = "src.task.ner.datapipe.SampleWithTags" },
-    { type = "alchemy.pipeline.itr.Batch", batch_size = 16 },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
     { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
 ]
 
@@ -99,7 +99,7 @@ lowercase = false
 dropout = 0.1
 
 use_learnable_scalar = false
-num_proto_per_type = 4
+num_proto_per_type = 3
 
 [criterion]
 type = "ce"

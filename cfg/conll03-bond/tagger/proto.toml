@@ -99,16 +99,16 @@ lowercase = false
 dropout = 0.1
 
 use_learnable_scalar = false
-num_proto_per_type = 4
+num_proto_per_type = 3
 
 [criterion]
 type = "ce"
 
 neg_ratio = 0.05
-compact_weight = 0.05
+compact_weight = 0.1
 match_type = "sinkhorn"
 
-proto_ema_momentum = 0.5
+proto_ema_momentum = 0.9
 
 [optim]
 type = "alchemy.optim.AdamW"

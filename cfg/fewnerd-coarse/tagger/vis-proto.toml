@@ -1,8 +1,8 @@
-tag = "vis-proto-mpu"
+tag = "vis-proto"
 runner = "alchemy.runner.Trainer"
 plugins = [
     { type = "alchemy.plugins.BasicSetup" },
-    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-dict/tagger/vis", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/fewnerd-coarse/tagger/vis", subdirs = ["detail_log"] },
     { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
     { type = "alchemy.plugins.TensorboardLogger" },
     { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
@@ -15,12 +15,12 @@ type = "src.task.ner.NerTask"
 outputpipes = []
 evalpipes = []
 
-meta = "data/datasets/conll03-mpu-dict/meta.json"
+meta = "/home/wsh/data/datasets/fewnerd-coarse/meta.json"
 
 [task.datasets.train]
 shuffle = true
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-mpu-dict/train.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["/home/wsh/data/datasets/fewnerd-coarse/train.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     # { type = "alchemy.pipeline.itr.Shuffle" },
@@ -34,12 +34,12 @@ pipes = [
 
 [sched]
 type = "alchemy.sched.LineWarmup"
-epochs = 10
-lr_warmup_steps = 100
+epochs = 4
+lr_warmup_steps = 500
 
 pipes = [
-    { type = "scripts.tsne.DumpOutputBSPipeline", when = [0, 1600, 4300], save_dir = "detail_log", split = "train", normalize = true },
-    { type = "scripts.tsne.DumpProtoBSPipeline", when = [0, 1600, 4300], save_dir = "detail_log", normalize = true }
+    { type = "scripts.tsne.DumpOutputBSPipeline", when = [0, 10000, 16100], save_dir = "detail_log", split = "train", normalize = true },
+    { type = "scripts.tsne.DumpProtoBSPipeline", when = [0, 10000, 16100], save_dir = "detail_log", normalize = true }
 ]
 
 [model]
@@ -53,16 +53,16 @@ lowercase = false
 dropout = 0.1
 
 use_learnable_scalar = false
-num_proto_per_type = 4
+num_proto_per_type = 12
 
 [criterion]
 type = "ce"
 
-neg_ratio = 0.2
-compact_weight = 0.5
+# neg_ratio = 1.0
+compact_weight = 1.0
 match_type = "sinkhorn"
 
-proto_ema_momentum = 0.9
+proto_ema_momentum = 0.5
 
 [optim]
 type = "alchemy.optim.AdamW"

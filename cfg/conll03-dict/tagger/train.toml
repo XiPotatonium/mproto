@@ -47,7 +47,7 @@ pipes = [
     { type = "src.task.ner.datapipe.PruneLongText" },
     { type = "src.task.ner.datapipe.Sample2Encoding" },
     { type = "src.task.ner.datapipe.SampleWithTags" },
-    { type = "alchemy.pipeline.itr.Batch", batch_size = 16 },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
     { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
 ]
 
@@ -100,7 +100,8 @@ dropout = 0.1
 
 [criterion]
 type = "ce"
-neg_ratio = 0.05
+
+neg_ratio = 0.02
 
 [optim]
 type = "alchemy.optim.AdamW"

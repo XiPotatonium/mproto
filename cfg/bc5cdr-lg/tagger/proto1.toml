@@ -1,8 +1,8 @@
-tag = "proto-st"
+tag = "proto1"
 runner = "alchemy.runner.Trainer"
 plugins = [
     { type = "alchemy.plugins.BasicSetup" },
-    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-dict/tagger/train", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/bc5cdr-lg/tagger/train", subdirs = ["detail_log"] },
     { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
     { type = "alchemy.plugins.TensorboardLogger" },
     { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
@@ -34,12 +34,12 @@ evalpipes = [
     { type = "src.task.ner.evalpipe.SaveModel", store_best = true, store_all = false },
 ]
 
-meta = "data/datasets/conll03-dict/meta.json"
+meta = "data/datasets/bc5cdr-lg/meta.json"
 
 [task.datasets.train]
 shuffle = true
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-dict/train.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-lg/train.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     # { type = "alchemy.pipeline.itr.Shuffle" },
@@ -53,7 +53,7 @@ pipes = [
 
 [task.datasets.dev]
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-dict/dev.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-lg/dev.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     { type = "src.task.ner.datapipe.ParseJsonDoc" },
@@ -66,7 +66,7 @@ pipes = [
 
 [task.datasets.test]
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-dict/test.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/bc5cdr-lg/test.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     { type = "src.task.ner.datapipe.ParseJsonDoc" },
@@ -79,40 +79,36 @@ pipes = [
 
 [sched]
 type = "alchemy.sched.LineWarmup"
-epochs = 15
+epochs = 10
 lr_warmup_steps = 100
 
 pipes = [
     { type = "alchemy.pipeline.sched.EvalStepESPipeline", period = 50 },
     # { type = "src.pipeline.LogTrainLossESPipeline", log_tensorboard = true, log_file = true },
     # { type = "src.pipeline.LogLRESPipeline", log_tensorboard = true, log_file = false },
-    { type = "src.pipeline.BondSLForProtoBSPipeline", begin_step = 800, period = 200, label_selection_threshold = 0.5, use_ema = true, ema_rate = 0.9 },
 ]
 
 [model]
 type = "src.models.tagger.NonParamProtoTagger"
 
 plm_type = "bert"
-plm_path = "/home/wsh/trf/bert-base-cased"
-tokenizer_path = "/home/wsh/trf/bert-base-cased"
+plm_path = "/home/wsh/trf/biobert-base-cased-v1.1"
+tokenizer_path = "/home/wsh/trf/biobert-base-cased-v1.1"
 lowercase = false
 
 dropout = 0.1
 
 use_learnable_scalar = false
-num_proto_per_type = 4
+num_proto_per_type = 1
 
 [criterion]
 type = "ce"
 
-neg_ratio = 0.02
+neg_ratio = 0.05
 compact_weight = 0.5
 match_type = "sinkhorn"
 
-proto_ema_momentum = 0.9
-
-loss_ema_decay = 0.9997
-loss_norm_alpha = 2
+proto_ema_momentum = 0.5
 
 [optim]
 type = "alchemy.optim.AdamW"

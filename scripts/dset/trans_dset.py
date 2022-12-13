@@ -2,19 +2,11 @@
 把原来的xx_types.json和xx_pos.json合并成xx_meta.json
 """
 import json
-import os
 from pathlib import Path
-import shutil
 from typing import Any, Dict, List, Optional
-from collections import Counter
 
 import typer
-from loguru import logger
-from rich.progress import Progress
 
-from alchemy.util import line_count
-from alchemy.util.extention.rich import full_columns
-from .ds_zh import DictAugNlpHelper
 from .. import prepare_logging
 
 
@@ -42,8 +34,6 @@ def trans(
                 } for entity in sample["entities"]
             ],
         }
-        if "pos" in sample:
-            new_sample["pos"] = sample["pos"]
         if "ltokens" in sample:
             new_sample["ltokens"] = sample["ltokens"]
         if "rtokens" in sample:
