@@ -10,11 +10,11 @@ def prfs(gt: List[List[Tuple]], pred: List[List[Tuple]], console: Optional[Conso
     gt_flat = []
     pred_flat = []
     types = set()
-    __ty2idx = {}
+    __ty2idx = {"None": 0}
     def ty2idx(ty: str) -> int:
         if ty not in __ty2idx:
             __ty2idx[ty] = len(__ty2idx)
-        return __ty2idx[ty] 
+        return __ty2idx[ty]
 
     for (sample_gt, sample_pred) in zip(gt, pred):
         union = set()
@@ -33,14 +33,14 @@ def prfs(gt: List[List[Tuple]], pred: List[List[Tuple]], console: Optional[Conso
                 gt_flat.append(ty2idx(t))
                 types.add(t)
             else:
-                gt_flat.append(0)
+                gt_flat.append(0)       # None
 
             if s in sample_pred:
                 t = s[2]
                 pred_flat.append(ty2idx(t))
                 types.add(t)
             else:
-                pred_flat.append(0)
+                pred_flat.append(0)     # None
 
     types = list(types)
     labels = [ty2idx(t) for t in types]
@@ -123,7 +123,7 @@ def filter_partial_overlapping(matches: List[Dict[str, Any]]) -> List[Dict[str, 
             if check_partial_overlap(e1, e2):
                 return True
         return False
-    
+
     matches = list(matches)                         # 拷贝一份，反正都是引用不浪费什么时间，inplace的sort可能会出现问题
     matches.sort(key=lambda p: p["end"] - p["start"], reverse=True)
 

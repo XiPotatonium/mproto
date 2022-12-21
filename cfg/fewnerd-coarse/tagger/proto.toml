@@ -12,18 +12,18 @@ plugins = [
 [task]
 type = "src.task.ner.NerTask"
 
-outputpipes = [     # 只有在eval和inference的时候会调用，train的时候不会
-    { type = "src.models.tagger.ProcTaggingOutput" },
+outputpipes = [
+    { type = "src.models.mproto.ProcTaggingOutput" },
     { type = "src.task.ner.outputpipe.WithSampleInfo" },
     # { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds_raw.jsonl" },
-    { type = "src.task.ner.outputpipe.PruneNone" },           # PnRNet的预测中会包含None，需要去掉
+    { type = "src.task.ner.outputpipe.PruneNone" },
     # { type = "src.task.ner.outputpipe.PruneInvalidSpan" },
     # { type = "src.task.ner.outputpipe.PruneOverlappingByConfidence", weight = { type_score = 1.0, start_score = 0.5, end_score = 0.5 } },
     # { type = "src.task.ner.outputpipe.PrunePartialOverlappingByConfidence", weight = { type_score = 1.0 } },
     # { type = "src.task.ner.outputpipe.PruneByClsScore", threshold = 0.9 },
     # { type = "src.task.ner.outputpipe.PruneByBoundaryScore", threshold = 0.9 },
     { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds.jsonl" },
-    { type = "alchemy.pipeline.output.Collect", varname = "preds_for_eval" },         # eval需要做一下collect因为eval需要全部一起eval
+    { type = "alchemy.pipeline.output.Collect", varname = "preds_for_eval" },
 ]
 
 evalpipes = [

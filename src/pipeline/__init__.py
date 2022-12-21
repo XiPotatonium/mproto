@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Any, Dict, MutableMapping, Optional
+from typing import Any, Dict, List, MutableMapping, Optional
 from loguru import logger
 import torch
 from torch.nn import Module
@@ -10,7 +10,7 @@ from alchemy.pipeline import SchedPipeline, BeginStepPipeline, EndStepPipeline
 import einops
 
 
-@SchedPipeline.register("LogLRESPipeline")
+@SchedPipeline.register()
 class LogLRESPipeline(EndStepPipeline):
     def __init__(
         self,
@@ -43,7 +43,7 @@ class LogLRESPipeline(EndStepPipeline):
         return kwargs
 
 
-@SchedPipeline.register("LogTrainLossESPipeline")
+@SchedPipeline.register()
 class LogTrainLossESPipeline(EndStepPipeline):
     def __init__(
         self,
@@ -77,28 +77,35 @@ class LogTrainLossESPipeline(EndStepPipeline):
         return kwargs
 
 
-@SchedPipeline.register("ModifyConfigBSPipeline")
+@SchedPipeline.register()
 class ModifyConfigBSPipeline(BeginStepPipeline):
-    def __init__(self, step: int, **kwargs) -> None:
+    def __init__(self, step: int, path: List[str], value: Any, **kwargs) -> None:
         super().__init__()
         self.step = step
-        self.kwargs = kwargs
+        self.path = path
+        self.value = value
 
     def __call__(self, batch: MutableMapping[str, Any], **kwargs) -> Dict[str, Any]:
         if sym_tbl().train_sched.cur_step == self.step:
-            old_cfg = {}
-            for key, value in self.kwargs.items():
-                old_cfg[key] = sym_tbl().cfg.get(key)
-                sym_tbl().cfg[key] = value
-            if len(old_cfg) != 0:
-                logger.info("Modify cfg {{{}}} at stage {}".format(
-                    ", ".join("{}: {} -> {}".format(k, v, self.kwargs[k]) for k, v in old_cfg.items()),
-                    sym_tbl().train_sched.cur_step
-                ))
+            v = sym_tbl().cfg
+            for i, path_item in enumerate(self.path):
+                if i == len(self.path) - 1:
+                    # last one
+                    old_value = v.get(path_item)
+                    v[path_item] = self.value
+                else:
+                    if path_item not in v:
+                        v[path_item] = {}
+                    v = v[path_item]
+
+            logger.info("Modify config {} from {} to {} at stage {}".format(
+                '.'.join(self.path), old_value, self.value,
+                sym_tbl().train_sched.cur_step
+            ))
         return kwargs
 
 
-@SchedPipeline.register("ResetOptimSchedBSPipeline")
+@SchedPipeline.register()
 class ResetOptimSchedBSPipeline(BeginStepPipeline):
     def __init__(self, step: int, **kwargs) -> None:
         super().__init__()
