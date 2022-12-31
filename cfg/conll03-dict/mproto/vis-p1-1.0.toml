@@ -1,0 +1,87 @@
+tag = "vis-p1-1.0"
+runner = "alchemy.runner.Trainer"
+plugins = [
+    { type = "alchemy.plugins.BasicSetup" },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-1.0/mproto/vis", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
+    { type = "alchemy.plugins.TensorboardLogger" },
+    { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
+    { type = "alchemy.plugins.DisplayRunningInfo" },
+]
+
+[task]
+type = "src.task.ner.NerTask"
+
+outputpipes = []
+evalpipes = []
+
+meta = "data/datasets/conll03-1.0/meta.json"
+
+[task.datasets.train]
+shuffle = true
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-1.0/train.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    # { type = "alchemy.pipeline.itr.Shuffle" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[task.datasets.dev]
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-1.0/dev.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[sched]
+type = "alchemy.sched.LineWarmup"
+epochs = 10
+lr_warmup_steps = 100
+
+pipes = [
+    { type = "alchemy.pipeline.sched.EvalStepESPipeline", period = 50 },
+    { type = "scripts.tsne.DumpOutputBSPipeline", when = [0, 2000, 3500, 4350], save_dir = "detail_log", split = "train", normalize = true },
+    { type = "scripts.tsne.DumpProtoBSPipeline", when = [0, 2000, 3500, 4350], save_dir = "detail_log", normalize = true }
+]
+
+[model]
+type = "src.models.mproto.MProtoTagger"
+
+plm_type = "bert"
+plm_path = "/home/wsh/trf/bert-base-cased"
+tokenizer_path = "/home/wsh/trf/bert-base-cased"
+lowercase = false
+
+dropout = 0.1
+
+use_learnable_scalar = false
+num_proto_per_type = 1
+
+[criterion]
+type = "ce"
+
+compact_weight = 0.01
+
+sinkhorn_type = "solver"
+none_ratio = 0.01
+
+proto_ema_momentum = 0.9
+
+[optim]
+type = "alchemy.optim.AdamW"
+lr = 1e-5
+trf_lr = 1e-5
+weight_decay = 1e-4
+max_grad_norm = 1.0

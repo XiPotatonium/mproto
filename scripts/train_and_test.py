@@ -24,6 +24,7 @@ def train_and_test(
         desc=desc,
         debug=debug,
         task_per_device=task_per_device,
+        force_mp=True,      # 似乎依然有未释放显存的问题
     )
 
     test_cfgs = []

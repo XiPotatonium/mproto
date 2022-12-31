@@ -158,18 +158,6 @@ class AlchemyBaseMProtoTagger(AlchemyModel):
             flat_hiddens = hidden.flatten(0, 1)[flat_token_masks]
             flat_gts = gts.flatten()[flat_token_masks]
 
-            # 负采样
-            neg_ratio = self.criterion_cfg.get("neg_ratio", -1)
-            if neg_ratio < 0:
-                pass
-            else:
-                # 做一些随机负采样
-                sample_masks = (flat_gts != 0) | (torch.rand_like(flat_gts, dtype=torch.float) < neg_ratio)
-                flat_logits = torch.masked_select(flat_logits, sample_masks.unsqueeze(-1)).view(-1, logits.size(-1))
-                flat_pred_tags = torch.masked_select(flat_pred_tags, sample_masks)
-                flat_hiddens = torch.masked_select(flat_hiddens, sample_masks.unsqueeze(-1)).view(-1, flat_hiddens.size(-1))
-                flat_gts = torch.masked_select(flat_gts, sample_masks)
-
             match_index = self.sinkhorn_matching_and_ema(
                 flat_hiddens,
                 flat_logits,
@@ -403,6 +391,10 @@ class AlchemyMProtoTagger(AlchemyBaseMProtoTagger):
             indexes = torch.argmax(assignment, dim=-1)
             onehot_indexes = F.one_hot(indexes, assignment.size(-1)).float()
             # onehot_indexes = F.gumbel_softmax(assignment, tau=0.5, hard=True)
+            if sym_tbl().contains_global("assignments"):
+                if k == 0:
+                    # 之分析unlabeled entities，这些东西仅包含在O中
+                    sym_tbl().get_global("assignments").append(assignment.clone().detach().cpu())
 
             if k == 0:
                 # 将匹配到伪原型的特征剔除出去，并且添加bp_mask

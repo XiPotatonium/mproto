@@ -103,7 +103,7 @@ class DumpProtoBSPipeline(BeginStepPipeline):
             save_dir = record_dir / self.save_dir
             save_dir.mkdir(exist_ok=True)
             proto_save_path = save_dir / "proto{}.npy".format(sym_tbl().train_sched.cur_step)
-            proto = sym_tbl().model.model.type_ebd.detach().cpu()
+            proto = sym_tbl().model.model.protos.detach().cpu()
             if self.normalize:
                 proto = F.normalize(proto, dim=-1)
             proto = proto.numpy()

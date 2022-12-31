@@ -1,8 +1,8 @@
-tag = "train-base"
+tag = "train-p3-0.8"
 runner = "alchemy.runner.Trainer"
 plugins = [
     { type = "alchemy.plugins.BasicSetup" },
-    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-bond/mproto/train", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-0.8/mproto/train", subdirs = ["detail_log"] },
     { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
     { type = "alchemy.plugins.TensorboardLogger" },
     { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
@@ -34,12 +34,12 @@ evalpipes = [
     { type = "src.task.ner.evalpipe.SaveModel", store_best = true, store_all = false },
 ]
 
-meta = "data/datasets/conll03-bond/meta.json"
+meta = "data/datasets/conll03-0.8/meta.json"
 
 [task.datasets.train]
 shuffle = true
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-bond/train.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-0.8/train.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     # { type = "alchemy.pipeline.itr.Shuffle" },
@@ -53,7 +53,7 @@ pipes = [
 
 [task.datasets.dev]
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-bond/dev.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-0.8/dev.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     { type = "src.task.ner.datapipe.ParseJsonDoc" },
@@ -66,7 +66,7 @@ pipes = [
 
 [task.datasets.test]
 pipes = [
-    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-bond/test.jsonl"] },
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-0.8/test.jsonl"] },
     { type = "src.task.ner.datapipe.JsonLOpener" },
     { type = "alchemy.pipeline.itr.SplitByWorker" },
     { type = "src.task.ner.datapipe.ParseJsonDoc" },
@@ -89,7 +89,7 @@ pipes = [
 ]
 
 [model]
-type = "src.models.mproto.BaseMProtoTagger"
+type = "src.models.mproto.MProtoTagger"
 
 plm_type = "bert"
 plm_path = "/home/wsh/trf/bert-base-cased"
@@ -104,12 +104,12 @@ num_proto_per_type = 3
 [criterion]
 type = "ce"
 
-compact_weight = 0.05
+compact_weight = 0.01
 
 sinkhorn_type = "solver"
-neg_ratio = 0.05
+none_ratio = 0.01
 
-proto_ema_momentum = 0.5
+proto_ema_momentum = 0.9
 
 [optim]
 type = "alchemy.optim.AdamW"

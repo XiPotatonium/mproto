@@ -1,4 +1,4 @@
-tag = "train"
+tag = "train-p1"
 runner = "alchemy.runner.Trainer"
 plugins = [
     { type = "alchemy.plugins.BasicSetup" },
@@ -99,17 +99,17 @@ lowercase = false
 dropout = 0.1
 
 use_learnable_scalar = false
-num_proto_per_type = 3
+num_proto_per_type = 1
 
 [criterion]
 type = "ce"
 
-compact_weight = 0.1
+compact_weight = 0.05
 
 sinkhorn_type = "solver"
-none_ratio = 0.02
+none_ratio = 0.01
 
-proto_ema_momentum = 0.5
+proto_ema_momentum = 0.9
 
 [optim]
 type = "alchemy.optim.AdamW"
