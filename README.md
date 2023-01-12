@@ -1,25 +1,24 @@
-# Mproto
+# MProto
 
-| CoNLL03     | Prec        | Rec         | F1          | Path        |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| Header      | xxxxx | xxx | xxx | xxx |
+## Usage
 
+### Environment setup and preparation
 
-| CoNLL03-dict| Prec        | Rec         | F1          | Path        |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| Header      | xxxxx | xxx | xxx | xxx |
+```bash
+conda create --name mproto --file requirements.txt
+```
 
+You should first download pre-trained language model (from huggingface) and
+set `plm_path` and `tokenizer_path` in the configuration file to the path of the pre-trained language model.
 
-| CoNLL03-kb  | Prec        | Rec         | F1          | Path        |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| Header      | xxxxx | xxx | xxx | xxx |
+We use bert-base-cased for CoNLL03 dataset and biobert-base-cased-v1.1 for BC5CDR datset.
 
+### Train
 
-| BC5CDR-sm   | Prec        | Rec         | F1          | Path        |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| Header      | xxxxx | xxx | xxx | xxx |
+We train our model using RTX-3090 on all datasets.
 
+Type the following command to train and test the model.
 
-| BC5CDR-lg   | Prec        | Rec         | F1          | Path        |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| Header      | xxxxx | xxx | xxx | xxx |
+```bash
+python -m scripts.train_and_test cfg/conll03-dict/mproto/train-p3-1.0.toml
+```
