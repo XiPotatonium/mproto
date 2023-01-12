@@ -79,37 +79,5 @@ def trans(src: str, dest: str = typer.Option(...)):
         json.dump(types, f, ensure_ascii=False)
 
 
-@app.command()
-def trans_with_context(dset: str, dest: str = typer.Option(...), window: int = 2):
-    dest: Path = Path(dest)
-    dest.mkdir(exist_ok=True, parents=True)
-
-    for file in Path(dset).iterdir():
-        if file.suffix != ".jsonl":
-            continue
-        with file.open('r', encoding="utf8") as f:
-            datasets = [json.loads(line) for line in f]
-        with (dest / file.name).open('w', encoding="utf8") as f:
-            for i, sample in enumerate(datasets):
-                ltokens = []
-                rtokens = []
-                k = window - 1
-                while k >= 0:
-                    # doc_id需要一致，也就是说上下文需要是同一个文章里面的，不能跨越文章
-                    if i > k and sample["doc_id"] == datasets[i - k - 1]["doc_id"]:
-                        ltokens.extend(datasets[i - k - 1]["tokens"])
-                    k -= 1
-                k = 1
-                while k < window + 1:
-                    if i < len(datasets) - k and sample["doc_id"] == datasets[i + k]["doc_id"]:
-                        rtokens.extend(datasets[i + k]["tokens"])
-                    k += 1
-                sample["ltokens"] = ltokens
-                sample["rtokens"] = rtokens
-                f.write(json.dumps(sample, ensure_ascii=False))
-                f.write('\n')
-    shutil.copy(str(Path(dset) / "meta.json"), str(Path(dest) / "meta.json"))
-
-
 if __name__ == "__main__":
     app()
