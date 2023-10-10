@@ -1,5 +1,7 @@
 # MProto
 
+Source codes for the paper "MProto: Multi-Prototype Network with Denoised Optimal Transport for Distantly Supervised Named Entity Recognition", accepted to EMNLP 2023.
+
 ## Overview
 
 ![Overview](doc/main.png "")
