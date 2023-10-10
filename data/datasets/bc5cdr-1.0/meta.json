@@ -1,0 +1,1 @@
+{"entities": {"Chemical": {"short": "Chemical", "verbose": "Chemical"}, "Disease": {"short": "Disease", "verbose": "Disease"}}, "type2idx": {"O": 0, "Chemical": 1, "Disease": 2}}

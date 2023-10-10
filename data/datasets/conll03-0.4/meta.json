@@ -1,0 +1,1 @@
+{"entities": {"PER": {"short": "PER", "verbose": "PER"}, "ORG": {"short": "ORG", "verbose": "ORG"}, "LOC": {"short": "LOC", "verbose": "LOC"}, "MISC": {"short": "MISC", "verbose": "MISC"}}, "type2idx": {"O": 0, "PER": 1, "LOC": 2, "ORG": 3, "MISC": 4}}
