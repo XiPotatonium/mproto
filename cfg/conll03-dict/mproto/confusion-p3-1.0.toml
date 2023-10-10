@@ -1,0 +1,105 @@
+tag = "confusion-p3-1.0"
+runner = "alchemy.runner.Trainer"
+plugins = [
+    { type = "alchemy.plugins.BasicSetup" },
+    { type = "alchemy.plugins.FileLogger", log_dir = "records/conll03-1.0/mproto/confusion", subdirs = ["detail_log"] },
+    { type = "alchemy.plugins.Backup", paths = ["alchemy", "src"] },
+    { type = "alchemy.plugins.TensorboardLogger" },
+    { type = "alchemy.plugins.Seeding", seed = 0, use_deterministic_algorithms = true },
+    { type = "alchemy.plugins.DisplayRunningInfo" },
+]
+
+[task]
+type = "src.task.ner.NerTask"
+
+outputpipes = [
+    { type = "src.models.mproto.ProcTaggingOutput" },
+    { type = "src.task.ner.outputpipe.WithSampleInfo" },
+    # { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds_raw.jsonl" },
+    { type = "src.task.ner.outputpipe.PruneNone" },
+    # { type = "src.task.ner.outputpipe.PruneInvalidSpan" },
+    # { type = "src.task.ner.outputpipe.PruneOverlappingByConfidence", weight = { type_score = 1.0, start_score = 0.5, end_score = 0.5 } },
+    # { type = "src.task.ner.outputpipe.PrunePartialOverlappingByConfidence", weight = { type_score = 1.0 } },
+    # { type = "src.task.ner.outputpipe.PruneByClsScore", threshold = 0.9 },
+    # { type = "src.task.ner.outputpipe.PruneByBoundaryScore", threshold = 0.9 },
+    # { type = "alchemy.pipeline.output.SaveAppend", filename = "detail_log/preds.jsonl" },
+    { type = "alchemy.pipeline.output.Collect", varname = "preds_for_eval" },
+]
+
+evalpipes = [
+    { type = "src.task.ner.evalpipe.EvalNer", varname = "preds_for_eval" },
+    { type = "src.task.ner.evalpipe.LogBest" },
+    # { type = "src.task.ner.evalpipe.LogTensorboard" },
+    # { type = "src.task.ner.evalpipe.SaveStepExamples", template = "src/templates/entity_examples.html", save_dir = "detail_log" },
+    # { type = "src.task.ner.evalpipe.SaveModel", store_best = true, store_all = false },
+]
+
+meta = "data/datasets/conll03-1.0/meta.json"
+
+[task.datasets.train]
+shuffle = true
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-1.0/train.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    # { type = "alchemy.pipeline.itr.Shuffle" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[task.datasets.dev]
+pipes = [
+    { type = "alchemy.pipeline.lst.SequenceWrapper", datapipe = ["data/datasets/conll03-1.0/dev.jsonl"] },
+    { type = "src.task.ner.datapipe.JsonLOpener" },
+    { type = "alchemy.pipeline.itr.SplitByWorker" },
+    { type = "src.task.ner.datapipe.ParseJsonDoc" },
+    { type = "src.task.ner.datapipe.PruneLongText" },
+    { type = "src.task.ner.datapipe.Sample2Encoding" },
+    { type = "src.task.ner.datapipe.SampleWithTags" },
+    { type = "alchemy.pipeline.itr.Batch", batch_size = 32 },
+    { type = "alchemy.pipeline.lst.ItrToLst", is_sized = false },
+]
+
+[sched]
+type = "alchemy.sched.LineWarmup"
+epochs = 10
+lr_warmup_steps = 100
+
+pipes = [
+    { type = "alchemy.pipeline.sched.EvalStepESPipeline", period = 50 },
+    { type = "scripts.confusion.DumpBSPipeline", when = [0, 10, 30, 50, 70, 75, 80, 100, 120, 150, 200, 500, 950, 1400], save_dir = "detail_log", split = "train" },
+]
+
+[model]
+type = "src.models.mproto.MProtoTagger"
+
+plm_type = "bert"
+plm_path = "data/models/bert-base-cased"
+tokenizer_path = "data/models/bert-base-cased"
+lowercase = false
+
+dropout = 0.1
+
+use_learnable_scalar = false
+num_proto_per_type = 3
+
+[criterion]
+type = "ce"
+
+compact_weight = 0.01
+
+sinkhorn_type = "solver"
+none_ratio = 0.01
+
+proto_ema_momentum = 0.9
+
+[optim]
+type = "alchemy.optim.AdamW"
+lr = 1e-5
+trf_lr = 1e-5
+weight_decay = 1e-4
+max_grad_norm = 1.0

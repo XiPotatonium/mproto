@@ -14,11 +14,11 @@ from alchemy.util import batch_to_device, filter_optional_cfg
 from alchemy.util.optim import prepare_trf_based_model_params
 from ...task.ner.tagging import BioTaggingScheme, IOTaggingScheme, TaggingScheme
 from ...task.ner import NerTask
-from .model import CosineProtoTagger, L2ProtoTagger, Tagger
+from .model import Tagger
 
 
 
-@OutputPipeline.register("ProcTaggingOutput")
+@OutputPipeline.register()
 class ProcTaggingOutput(OutputPipeline):
     def __init__(self, **kwargs):
         super().__init__()

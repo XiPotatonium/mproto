@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from loguru import logger
-from transformers import BertTokenizer, RobertaTokenizer, PreTrainedTokenizer
+from transformers import BertTokenizer, RobertaTokenizer, PreTrainedTokenizer, AutoTokenizer
 
 from alchemy import AlchemyTask, sym_tbl
 from alchemy.pipeline import DataPipeline, OutputPipeline, EvalPipeline
@@ -106,14 +106,7 @@ class NerTask(AlchemyTask):
         return super().max_positions()
 
     def build_tokenizer(self) -> PreTrainedTokenizer:
-        plm_type = sym_tbl().cfg["model"]["plm_type"]
-        if plm_type == "roberta":
-            plm_tokenizer_cls = RobertaTokenizer
-        elif plm_type == "bert":
-            plm_tokenizer_cls = BertTokenizer
-        else:
-            raise ValueError("Unimplemented plm_type \"{}\"".format(plm_type))
-        return plm_tokenizer_cls.from_pretrained(
+        return AutoTokenizer.from_pretrained(
             sym_tbl().cfg["model"]["tokenizer_path"],
             local_files_only=True,
             do_lower_case=sym_tbl().cfg["model"]["lowercase"],

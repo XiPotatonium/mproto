@@ -5,32 +5,6 @@ from torch import nn, Tensor
 import torch.nn.functional as F
 
 
-def distributed_sinkhorn(out, sinkhorn_iterations=100, epsilon=0.05):
-    L = torch.exp(out / epsilon).t() # K x B
-    B = L.shape[1]
-    K = L.shape[0]
-
-    # make the matrix sums to 1
-    sum_L = torch.sum(L)
-    L /= sum_L
-
-    for _ in range(sinkhorn_iterations):
-        L /= torch.sum(L, dim=1, keepdim=True)
-        L /= K
-
-        L /= torch.sum(L, dim=0, keepdim=True)
-        L /= B
-
-    L *= B
-    L = L.t()
-
-    indexs = torch.argmax(L, dim=1)
-    # L = torch.nn.functional.one_hot(indexs, num_classes=L.shape[1]).float()
-    L = F.gumbel_softmax(L, tau=0.5, hard=True)
-
-    return L, indexs
-
-
 def debug_detect_value_anomaly(value: Tensor, tag: str = "DEBUG"):
     if torch.any(torch.isnan(value)):
         raise ValueError("{}: nan {}".format(tag, value))

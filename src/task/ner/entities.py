@@ -1,5 +1,8 @@
 """
 TODO: 这里需要重构一下，span和range需要区分开，否则容易产生混淆，顺便全部改成dataclass好了
+Token其实应该是Word，存在概念的混淆
+get_span_tokens的实现很奇怪，是不是不需要这个东西？
+Word - SubWord - Char这三层结构，不要用token这个词，因为token只有在输入模型的时候有意义，在数据中无意义，反而会引入歧义
 """
 
 from dataclasses import dataclass
@@ -22,6 +25,7 @@ class EntityType:
         return hash(self.identifier)
 
 
+# Word not token
 class Token:
     # POS_MAP = [
     #   "ADJ", "ADP", "ADV", "AUX", "CONJ", "CCONJ", "DET", "INTJ",
